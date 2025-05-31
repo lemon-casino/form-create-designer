@@ -5,6 +5,8 @@ const En = {
         title: 'Title',
         info: 'Info',
         control: 'Control',
+        hiddenCondition: 'Hidden condition',
+        setHiddenCondition: 'Set hidden condition',
         labelShow: 'Whether to display',
         labelStyle: 'Label style',
         formItem: 'Configure form item',
