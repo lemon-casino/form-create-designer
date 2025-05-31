@@ -17,7 +17,11 @@
                    @click="addRaw(true)"><i class="fc-icon icon-add-circle" style="font-weight: 700;"></i>
             {{ formCreateInject.t('add') || '添加' }}
         </el-button>
-        <ImportSteps v-model:visible="showImport" :columns="columns" @done="handleImportDone" />
+        <ImportSteps
+            v-model="showImport"
+            :columns="columns"
+            :on-import="handleImport"
+        />
     </div>
 </template>
 
@@ -106,16 +110,22 @@ export default {
             this.$emit('batch-import');
         },
         batchExport() {
-            const ws = XLSX.utils.json_to_sheet(this.modelValue || []);
+            const headers = this.columns.map(c => c.label);
+            const fields = this.columns.map(c => c.rule && c.rule[0] && c.rule[0].field);
+            const data = [headers];
+            (this.modelValue || []).forEach(row => {
+                data.push(fields.map(f => row[f] !== undefined ? row[f] : ''));
+            });
+            const ws = XLSX.utils.aoa_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
             XLSX.writeFile(wb, 'export.xlsx');
             this.$emit('batch-export', this.modelValue);
         },
-        handleImportDone(data) {
+        handleImport(data) {
             this.$emit('update:modelValue', data);
             this.$emit('change', data);
-            this.showImport = false;
+            return Promise.resolve();
         },
         updateValue() {
             const value = this.trs.map((tr, idx) => {
@@ -362,10 +372,11 @@ export default {
 }
 
 ._fc-tf-table {
-    width: 100%;
+    min-width: 100%;
+    width: max-content;
     height: 100%;
     overflow: hidden;
-    table-layout: fixed;
+    table-layout: auto;
     border: 1px solid #EBEEF5;
     border-bottom: 0 none;
 }
@@ -397,8 +408,8 @@ export default {
     position: relative;
     box-sizing: border-box;
     overflow-wrap: break-word;
-    /*white-space: nowrap;*/
-    overflow: hidden;
+    white-space: nowrap;
+    overflow: visible;
     border: 0 none;
     border-bottom: 1px solid #EBEEF5;
 }
