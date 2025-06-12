@@ -22,6 +22,16 @@ export default {
             props: {}
         };
     },
+    watch: {
+        value({value, rule}) {
+            rule._link = /^https?:/.test(value) ? value : '';
+        }
+    },
+    attrs: {
+        link({rule}) {
+            return rule._link || '';
+        }
+    },
     props(_, {t}) {
         return localeProps(t, name + '.props', [
             {
@@ -42,6 +52,7 @@ export default {
                     {label: 'date', value: 'date'},
                     {label: 'month', value: 'month'},
                     {label: 'datetime-local', value: 'datetime-local'},
+                    {label: 'protocol', value: 'protocol'},
                 ])
             },
             {
