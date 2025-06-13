@@ -402,7 +402,7 @@ import form from '../config/base/form';
 import field from '../config/base/field';
 import style from '../config/base/style';
 import validate from '../config/base/validate';
-import {deepCopy} from '@form-create/utils/lib/deepextend';
+import {deepClone} from '../utils/clone';
 import is, {hasProperty} from '@form-create/utils/lib/type';
 import {lower} from '@form-create/utils/lib/tocase';
 import Mitt from '@form-create/utils/lib/mitt';
@@ -876,7 +876,7 @@ export default defineComponent({
                 if (data.inputForm.state) {
                     data.inputForm.rule = designerForm.parseJson(methods.getJson());
                     data.inputForm.option = designerForm.parseJson(methods.getOptionsJson());
-                    data.inputForm.option.formData = deepCopy(data.inputForm.data);
+                    data.inputForm.option.formData = deepClone(data.inputForm.data);
                     data.inputForm.option.appendValue = false;
                     data.inputForm.option.submitBtn.show = false;
                     data.inputForm.option.resetBtn.show = false;
@@ -901,7 +901,7 @@ export default defineComponent({
             },
             inputReset(formData) {
                 data.inputForm.rule = designerForm.parseJson(methods.getJson());
-                data.inputForm.option.formData = formData || deepCopy(data.inputForm.data);
+                data.inputForm.option.formData = formData || deepClone(data.inputForm.data);
                 data.inputForm.key = uniqueId();
             },
             setFormData(formData) {
@@ -996,13 +996,13 @@ export default defineComponent({
                 copyTextToClipboard(this.$refs.previewCode.innerText);
             },
             getRule() {
-                return methods.parseRule(deepCopy(data.dragForm.rule[0].children));
+                return methods.parseRule(deepClone(data.dragForm.rule[0].children));
             },
             getJson() {
                 return designerForm.toJson(methods.getRule());
             },
             getOption() {
-                const options = deepCopy(data.formOptions);
+                const options = deepClone(data.formOptions);
                 ['onReset', 'onSubmit', 'onCreated', 'onMounted', 'onReload', 'onChange', 'beforeFetch'].forEach(key => {
                     delete options[key];
                 });
@@ -1016,7 +1016,7 @@ export default defineComponent({
                 options.resetBtn = options._resetBtn;
                 options.resetBtn.innerText = t('props.reset');
                 options.submitBtn.innerText = t('props.submit');
-                const formData = deepCopy(data.inputForm.data);
+                const formData = deepClone(data.inputForm.data);
                 if (Object.keys(formData).length > 0) {
                     options.formData = formData;
                 }
@@ -1051,7 +1051,7 @@ export default defineComponent({
                 if (!rules) {
                     rules = [];
                 }
-                data.children = ref(methods.loadRule(is.String(rules) ? designerForm.parseJson(rules) : deepCopy(rules)));
+                data.children = ref(methods.loadRule(is.String(rules) ? designerForm.parseJson(rules) : deepClone(rules)));
                 methods.clearActiveRule();
                 data.dragForm.rule = methods.makeDragRule(methods.makeChildren(data.children));
                 methods.updateTree();
@@ -1091,10 +1091,10 @@ export default defineComponent({
                 fcx.active = '';
             },
             setOption(opt) {
-                const defOptions = deepCopy(methods.getConfig('formOptions', {}));
+                const defOptions = deepClone(methods.getConfig('formOptions', {}));
                 const defForm = defOptions.form || {};
                 delete defOptions.form;
-                let options = {...defOptions, ...is.String(opt) ? JSON.parse(opt) : deepCopy(opt || {})};
+                let options = {...defOptions, ...is.String(opt) ? JSON.parse(opt) : deepClone(opt || {})};
                 options.form = {
                     inline: false,
                     hideRequiredAsterisk: false,
@@ -1570,20 +1570,20 @@ export default defineComponent({
                 }
                 Object.keys(rule).forEach(k => {
                     if (['effect', 'config', 'payload', 'id', 'type', '_menu'].indexOf(k) < 0)
-                        formData['formCreate' + upper(k)] = deepCopy(rule[k]);
+                        formData['formCreate' + upper(k)] = deepClone(rule[k]);
                 });
                 Object.keys(rule.props).forEach(k => {
                     const item = rule.props[k];
-                    formData[k] = deepCopy(item);
+                    formData[k] = deepClone(item);
                     if (is.Object(item)) {
                         Object.keys(item).forEach(sub => {
-                            formData[k + '>' + sub] = deepCopy(item[sub]);
+                            formData[k + '>' + sub] = deepClone(item[sub]);
                         });
                     }
                 });
                 ['props', 'effect', 'attrs', 'style', 'wrap'].forEach(name => {
                     rule[name] && (typeof rule[name] === 'object') && Object.keys(rule[name]).forEach(k => {
-                        formData['formCreate' + upper(name) + '>' + k] = deepCopy(rule[name][k]);
+                        formData['formCreate' + upper(name) + '>' + k] = deepClone(rule[name][k]);
                     });
                 });
                 const configAttrs = rule._menu.attrs || {};
@@ -1668,7 +1668,7 @@ export default defineComponent({
             },
             replaceField(rule) {
                 const flag = ['array', 'object'].indexOf(rule._menu.subForm) > -1;
-                let temp = methods.parseRule(deepCopy([rule]))[0];
+                let temp = methods.parseRule(deepClone([rule]))[0];
                 const autoResetName = false !== methods.getConfig('autoResetName');
                 if (flag) {
                     temp.field = uniqueId();
@@ -1769,7 +1769,7 @@ export default defineComponent({
                             console.error(e);
                         }
                     } else {
-                        let _rule = deepCopy(updateRule);
+                        let _rule = deepClone(updateRule);
                         delete _rule.children;
                         delete _rule.component;
                         rule = mergeProps([rule, _rule]);
@@ -1980,7 +1980,7 @@ export default defineComponent({
             },
             addOperationRecord() {
                 const rule = methods.getJson();
-                const formData = deepCopy(data.inputForm.data);
+                const formData = deepClone(data.inputForm.data);
                 const list = data.operation.list.slice(0, data.operation.idx + 1);
                 list.push({rule, formData});
                 data.operation.list = list;
