@@ -678,7 +678,8 @@ const ZhCn = {
         },
         protocol: {
             name: '协议输入框',
-            jump: '点击链接'
+            jump: '点击链接',
+            placeholder: '请输入URL（http://或https://开头）'
         },
         radio: {
             name: '单选框',
