@@ -28,7 +28,7 @@
             </el-table-column>
         </el-table>
         <div class="_td-table-opt-handle">
-            <el-button link type="primary" @click="add" v-if="!max || max > value.length">
+            <el-button link type="primary" @click="add" v-if="!max || max > value.length" class="add-button">
                 <i class="fc-icon icon-add"></i> {{ t('tableOptions.add') }}
             </el-button>
         </div>
@@ -147,16 +147,32 @@ export default defineComponent({
 <style scoped>
 ._td-table-opt {
     width: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 ._td-table-opt .el-table {
     z-index: 1;
+    width: 100% !important;
 }
 
 ._td-table-opt-handle {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     padding-right: 5px;
+    margin-top: 5px;
+    flex-wrap: nowrap;
+}
+
+._td-table-opt-handle .el-button {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.add-button {
+    min-width: 80px;
+    display: inline-flex;
+    align-items: center;
 }
 </style>

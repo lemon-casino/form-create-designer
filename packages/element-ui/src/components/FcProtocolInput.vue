@@ -3,6 +3,8 @@
     <el-input
       v-model="currentValue"
       :placeholder="placeholder"
+      :disabled="disabled"
+      :readonly="readonly"
       @input="handleInput"
       @blur="$emit('blur')"
       @focus="$emit('focus')"
@@ -37,6 +39,14 @@ export default defineComponent({
     placeholder: {
       type: String,
       default: '请输入URL'
+    },
+    disabled: {
+      type: Boolean,
+      default: false
+    },
+    readonly: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['update:modelValue', 'input', 'change', 'blur', 'focus', 'clear'],

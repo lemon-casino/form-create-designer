@@ -25,7 +25,9 @@ export default {
     },
     props(_, {t}) {
         return localeProps(t, name + '.props', [
-            { type: 'input', field: 'placeholder' }
+            { type: 'input', field: 'placeholder' },
+            { type: 'switch', field: 'disabled' },
+            { type: 'switch', field: 'readonly' }
         ]);
     }
 };
