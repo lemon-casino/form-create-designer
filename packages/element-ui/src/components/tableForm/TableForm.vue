@@ -747,10 +747,12 @@ export default {
                 }
             }];
             this.columns.forEach((column) => {
+                const isHidden = column.display === false ||
+                  (Array.isArray(column.rule) && column.rule.every(r => r.display === false));
                 header.push({
                     type: 'th',
                     native: true,
-                    style: column.style,
+                    style: Object.assign({}, column.style, isHidden ? {display: 'none'} : {}),
                     class: column.required ? '_fc-tf-head-required' : '',
                     props: {
                         innerText: column.label || ''
@@ -759,6 +761,7 @@ export default {
                 body.push({
                     type: 'td',
                     native: true,
+                    style: isHidden ? {display: 'none'} : {},
                     children: [...(column.rule || [])]
                 });
             });
