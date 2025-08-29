@@ -1,5 +1,5 @@
 <template>
-  <div class="step-select-file">
+  <div class="step-select-file" :class="{ 'mobile': isMobile }">
     <div class="upload-area">
       <el-upload
         class="upload-excel"
@@ -16,7 +16,7 @@
       >
         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
         <div class="el-upload__text">
-          点击或者拖动文件到此区域上传
+          <span class="upload-text">{{ isMobile ? '点击选择文件' : '点击或者拖动文件到此区域上传' }}</span>
           <div class="el-upload__tip">
             支持 XLS, XLSX 等类型的文件
           </div>
@@ -24,15 +24,16 @@
       </el-upload>
     </div>
 
-    <div class="upload-tips">
+    <div class="upload-tips" :class="{ 'mobile-tips': isMobile }">
       <el-alert
         title="为了保证数据导入顺利，推荐您下载使用导入模板"
         type="info"
         show-icon
         class="mb-10px"
+        :closable="false"
       />
 
-      <div class="tips-list">
+      <div class="tips-list" :class="{ 'mobile-tips-list': isMobile }">
         <div class="tip-item">• 文件大小不超过 10MB</div>
         <div class="tip-item">• 仅支持 .xls 和 .xlsx 文件</div>
         <div class="tip-item">• 请确保您需要导入的excel: 不含合并单元格、sheet表头不含空单元格</div>
@@ -42,7 +43,13 @@
       </div>
 
       <div class="template-download">
-        <el-button type="primary" link @click="downloadTemplate">
+        <el-button 
+          type="primary" 
+          link 
+          @click="downloadTemplate"
+          :size="isMobile ? 'large' : 'default'"
+          class="download-btn"
+        >
           <el-icon><download /></el-icon>
           <span>下载导入模板</span>
         </el-button>
@@ -60,7 +67,8 @@ defineOptions({ name: 'StepSelectFile' })
 
 const props = defineProps({
   columns: { type: Array, required: true },
-  tableTitle: { type: String, default: '' }
+  tableTitle: { type: String, default: '' },
+  isMobile: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['select-file', 'download-template'])
@@ -89,23 +97,26 @@ const handleExceed = () => {
 const downloadTemplate = () => { emit('download-template') }
 </script>
 
-
 <style scoped>
 .step-select-file {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
+
 .step-select-file .upload-area {
   display: flex;
   justify-content: center;
 }
+
 .step-select-file .upload-area .upload-excel {
   width: 100%;
 }
+
 .step-select-file .upload-area .upload-excel :deep(.el-upload) {
   width: 100%;
 }
+
 .step-select-file .upload-area .upload-excel :deep(.el-upload-dragger) {
   width: 100%;
   height: 200px;
@@ -114,23 +125,140 @@ const downloadTemplate = () => { emit('download-template') }
   align-items: center;
   justify-content: center;
 }
+
 .step-select-file .upload-tips {
   padding: 10px;
 }
+
 .step-select-file .upload-tips .mb-10px {
   margin-bottom: 10px;
 }
+
 .step-select-file .upload-tips .tips-list {
   padding: 10px;
 }
+
 .step-select-file .upload-tips .tips-list .tip-item {
   line-height: 1.8;
   color: #606266;
   font-size: 14px;
 }
+
 .step-select-file .upload-tips .template-download {
   display: flex;
   justify-content: center;
   margin-top: 10px;
+}
+
+/* 移动端适配样式 */
+.step-select-file.mobile .upload-area .upload-excel :deep(.el-upload-dragger) {
+  height: 150px;
+  padding: 20px;
+}
+
+.step-select-file.mobile .upload-area .upload-excel :deep(.el-upload__text) {
+  text-align: center;
+}
+
+.step-select-file.mobile .upload-area .upload-excel :deep(.el-icon--upload) {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.step-select-file.mobile .upload-text {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.step-select-file.mobile .upload-area .upload-excel :deep(.el-upload__tip) {
+  font-size: 13px;
+  color: #909399;
+}
+
+.step-select-file.mobile .upload-tips {
+  padding: 15px;
+}
+
+.step-select-file.mobile .tips-list {
+  padding: 15px;
+}
+
+.step-select-file.mobile .tips-list .tip-item {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.step-select-file.mobile .template-download {
+  margin-top: 15px;
+}
+
+.step-select-file.mobile .download-btn {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+.step-select-file.mobile .download-btn .el-icon {
+  margin-right: 8px;
+}
+
+/* 响应式断点 */
+@media (max-width: 768px) {
+  .step-select-file {
+    gap: 15px;
+  }
+  
+  .step-select-file .upload-area .upload-excel :deep(.el-upload-dragger) {
+    height: 140px;
+    padding: 15px;
+  }
+  
+  .step-select-file .upload-tips {
+    padding: 12px;
+  }
+  
+  .step-select-file .tips-list {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .step-select-file .upload-area .upload-excel :deep(.el-upload-dragger) {
+    height: 120px;
+    padding: 12px;
+  }
+  
+  .step-select-file .upload-area .upload-excel :deep(.el-icon--upload) {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+  
+  .step-select-file .upload-text {
+    font-size: 15px;
+  }
+  
+  .step-select-file .upload-area .upload-excel :deep(.el-upload__tip) {
+    font-size: 12px;
+  }
+  
+  .step-select-file .tips-list .tip-item {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+}
+
+/* 触摸优化 */
+@media (hover: none) and (pointer: coarse) {
+  .step-select-file .upload-area .upload-excel :deep(.el-upload-dragger:hover) {
+    border-color: #409eff;
+  }
+  
+  .step-select-file .download-btn:hover {
+    background-color: #ecf5ff;
+  }
 }
 </style>

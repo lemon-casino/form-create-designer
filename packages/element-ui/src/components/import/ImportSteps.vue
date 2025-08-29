@@ -2,30 +2,36 @@
   <el-dialog
     v-model="dialogVisible"
     :title="title"
-    width="800px"
+    :width="isMobile ? '95%' : '800px'"
     :close-on-click-modal="false"
     :destroy-on-close="true"
+    :class="{ 'mobile-dialog': isMobile }"
     @closed="onClose"
   >
     <div class="import-steps">
-      <div class="manual-steps mb-20px">
+      <div class="manual-steps mb-20px" :class="{ 'mobile-steps': isMobile }">
         <div
           v-for="(step, index) in stepTitles"
           :key="index"
           class="manual-step"
-          :class="{ active: index === activeStep, done: index < activeStep }"
+          :class="{ 
+            active: index === activeStep, 
+            done: index < activeStep,
+            'mobile-step': isMobile 
+          }"
         >
           <div class="step-indicator">{{ index + 1 }}</div>
           <div class="step-label">{{ step }}</div>
         </div>
       </div>
 
-      <div class="step-content">
+      <div class="step-content" :class="{ 'mobile-content': isMobile }">
         <!-- 步骤1: 选择EXCEL表 -->
         <StepSelectFile
           v-if="activeStep === 0"
           :columns="columns"
           :table-title="tableTitle"
+          :is-mobile="isMobile"
           @select-file="handleFileSelected"
           @download-template="handleDownloadTemplate"
         />
@@ -36,6 +42,7 @@
           :excel-data="excelData"
           :sheets="excelSheets"
           :selected-sheet="selectedSheet"
+          :is-mobile="isMobile"
           @change-sheet="handleSheetChange"
         />
 
@@ -45,6 +52,7 @@
           :excel-data="excelData"
           :columns="columns"
           :column-mapping="columnMapping"
+          :is-mobile="isMobile"
           @update-mapping="handleUpdateMapping"
         />
 
@@ -56,18 +64,26 @@
           :success="importSuccess"
           :fail="importFail"
           :warnings="importWarnings"
+          :is-mobile="isMobile"
         />
       </div>
     </div>
 
     <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button v-if="activeStep > 0" @click="prevStep">上一步</el-button>
+      <div class="dialog-footer" :class="{ 'mobile-footer': isMobile }">
+        <el-button @click="dialogVisible = false" :size="isMobile ? 'large' : 'default'">取消</el-button>
+        <el-button 
+          v-if="activeStep > 0" 
+          @click="prevStep"
+          :size="isMobile ? 'large' : 'default'"
+        >
+          上一步
+        </el-button>
         <el-button 
           v-if="activeStep < 3" 
           type="primary" 
           :disabled="!canGoNext"
+          :size="isMobile ? 'large' : 'default'"
           @click="nextStep"
         >
           下一步
@@ -75,6 +91,7 @@
         <el-button 
           v-if="activeStep === 3 && importStatus === 'success'"
           type="primary" 
+          :size="isMobile ? 'large' : 'default'"
           @click="dialogVisible = false"
         >
           完成
@@ -85,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import StepSelectFile from './steps/StepSelectFile.vue'
 import StepPreviewData from './steps/StepPreviewData.vue'
 import StepImportSettings from './steps/StepImportSettings.vue'
@@ -117,6 +134,22 @@ const props = defineProps({
 
 // 定义组件事件
 const emit = defineEmits(['update:modelValue', 'imported'])
+
+// 移动端检测
+const isMobile = ref(false)
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 
 // 对话框可见性
 const dialogVisible = computed({
@@ -478,5 +511,154 @@ const onClose = () => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/* 移动端适配样式 */
+.mobile-dialog :deep(.el-dialog) {
+  margin: 5vh auto;
+  max-height: 90vh;
+}
+
+.mobile-dialog :deep(.el-dialog__body) {
+  padding: 15px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.mobile-dialog :deep(.el-dialog__header) {
+  padding: 15px 20px;
+}
+
+.mobile-dialog :deep(.el-dialog__footer) {
+  padding: 15px 20px;
+}
+
+/* 移动端步骤保持横向显示，但优化间距 */
+.mobile-steps {
+  flex-direction: row;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.mobile-step {
+  flex: none;
+  min-width: 120px;
+}
+
+.mobile-step::after {
+  display: none;
+}
+
+.mobile-step .step-indicator {
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.mobile-step .step-label {
+  font-size: 12px;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.mobile-content {
+  padding: 0 10px;
+}
+
+/* 移动端按钮上下对齐，修复错位 */
+.mobile-footer {
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.mobile-footer .el-button {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* 响应式断点 */
+@media (max-width: 768px) {
+  .import-steps {
+    padding: 0 10px;
+  }
+  
+  .import-steps .mb-20px {
+    margin-bottom: 15px;
+  }
+  
+  .import-steps .step-content {
+    min-height: 250px;
+  }
+  
+  /* 移动端步骤优化 */
+  .mobile-steps {
+    gap: 8px;
+  }
+  
+  .mobile-step {
+    min-width: 100px;
+  }
+  
+  .mobile-step .step-indicator {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+  }
+  
+  .mobile-step .step-label {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-dialog :deep(.el-dialog) {
+    margin: 2vh auto;
+    max-height: 96vh;
+  }
+  
+  .mobile-dialog :deep(.el-dialog__body) {
+    padding: 10px;
+  }
+  
+  .mobile-dialog :deep(.el-dialog__header) {
+    padding: 10px 15px;
+  }
+  
+  .mobile-dialog :deep(.el-dialog__footer) {
+    padding: 10px 15px;
+  }
+  
+  /* 小屏移动端步骤进一步优化 */
+  .mobile-steps {
+    gap: 6px;
+  }
+  
+  .mobile-step {
+    min-width: 80px;
+  }
+  
+  .mobile-step .step-indicator {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  
+  .mobile-step .step-label {
+    font-size: 10px;
+  }
+  
+  .mobile-footer {
+    gap: 10px;
+  }
+  
+  .mobile-footer .el-button {
+    height: 40px;
+    font-size: 15px;
+  }
 }
 </style>
