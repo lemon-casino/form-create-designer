@@ -1813,20 +1813,22 @@ export default defineComponent({
         }
         if (config.input) {
           const oldOn = rule.on || {};
+          const fieldConst = JSON.stringify(rule.field);
+          const wrap = (eventName, handler, withVal) => {
+            const valuePart = withVal ? ', value: arguments[0]' : '';
+            const handlerStr = typeof handler === 'function'
+              ? `(${handler.toString()}).apply(this, arguments);`
+              : '';
+            const body =
+              `window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('${eventName}', {field: ${fieldConst}${valuePart}});` +
+              (handlerStr ? `\n${handlerStr}` : '');
+            return new Function(body);
+          };
           rule.on = {
             ...oldOn,
-            focus: (...args) => {
-              window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('focus-field', {field: rule.field});
-              oldOn.focus && oldOn.focus(...args);
-            },
-            blur: (...args) => {
-              window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('blur-field', {field: rule.field});
-              oldOn.blur && oldOn.blur(...args);
-            },
-            input: (val, ...args) => {
-              window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('update-field', {field: rule.field, value: val});
-              oldOn.input && oldOn.input(val, ...args);
-            }
+            focus: wrap('focus-field', oldOn.focus),
+            blur: wrap('blur-field', oldOn.blur),
+            input: wrap('update-field', oldOn.input, true)
           };
         }
         if (config.languageKey) {
