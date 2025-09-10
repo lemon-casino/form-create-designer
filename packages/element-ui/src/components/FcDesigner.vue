@@ -479,15 +479,47 @@ export default defineComponent({
       default: undefined,
     },
     locale: Object,
-    handle: Array
+    handle: Array,
+    // current editing users { [id or field]: userName }
+    editing: {
+      type: Object,
+      default: () => ({})
+    }
   },
-  emits: ['active', 'create', 'copy', 'delete', 'drag', 'inputData', 'save', 'clear', 'copyRule', 'pasteRule', 'sortUp', 'sortDown', 'changeDevice'],
+  emits: ['active', 'create', 'copy', 'delete', 'drag', 'inputData', 'save', 'clear', 'copyRule', 'pasteRule', 'sortUp', 'sortDown', 'changeDevice', 'focus-field', 'blur-field', 'update-field'],
   setup(props) {
-    const {menu, height, mask, locale, handle} = toRefs(props);
+    const {menu, height, mask, locale, handle, editing} = toRefs(props);
     const vm = getCurrentInstance();
+    if (typeof window !== 'undefined') {
+      const timers = {};
+      window.__FC_DESIGNER_EMIT__ = (name, payload) => {
+        // debug output for collaborative events
+        // eslint-disable-next-line no-console
+        console.log('[fc-designer emit]', name, payload);
+        if (name === 'update-field') {
+          const key = payload && ((payload.id || payload.field) + (payload.row ? ':' + payload.row : ''));
+          clearTimeout(timers[key]);
+          timers[key] = setTimeout(() => {
+            vm.emit(name, payload);
+            delete timers[key];
+          }, 300);
+        } else {
+          vm.emit(name, payload);
+        }
+      };
+    }
     const fcx = reactive({active: null});
     provide('fcx', fcx);
     provide('designer', vm);
+    // collaborative editing state
+    const collabState = reactive(editing.value || {});
+    watch(editing, (val) => {
+      Object.keys(collabState).forEach(k => delete collabState[k]);
+      Object.assign(collabState, val || {});
+      // eslint-disable-next-line no-console
+      console.log('[fc-designer editing]', collabState);
+    });
+    provide('collabState', collabState);
 
     const configRef = toRef(props, 'config', {});
     const baseRule = toRef(configRef.value, 'baseRule', null);
@@ -1793,6 +1825,37 @@ export default defineComponent({
         }
         if (config.input && !rule.field) {
           rule.field = uniqueId();
+        }
+        if (config.input) {
+          const oldOn = rule.on || {};
+          const fieldConst = JSON.stringify(rule.field);
+          // prefer designer-assigned id, fall back to built-in id or field
+          const idConst = JSON.stringify(
+            rule._fc_id || rule.id || (rule.__fc__ && rule.__fc__.id) || rule.field
+          );
+          const wrap = (eventName, handler, withVal) => {
+            const handlerStr =
+              typeof handler === 'function'
+                ? `(${handler.toString()}).apply(this, arguments);`
+                : '';
+            const valueAssign = withVal
+              ? 'payload.value = arguments[0];'
+              : '';
+            const body =
+              `var payload = {id: ${idConst}, field: ${fieldConst}};\n` +
+              `var row = this.rule && this.rule._fc_table_row;\n` +
+              `if (row !== undefined) payload.row = row;\n` +
+              `${valueAssign}\n` +
+              `window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('${eventName}', payload);` +
+              (handlerStr ? `\n${handlerStr}` : '');
+            return new Function(body);
+          };
+          rule.on = {
+            ...oldOn,
+            focus: wrap('focus-field', oldOn.focus),
+            blur: wrap('blur-field', oldOn.blur),
+            input: wrap('update-field', oldOn.input, true)
+          };
         }
         if (config.languageKey) {
           methods.mergeOptions({
