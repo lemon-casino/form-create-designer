@@ -492,6 +492,9 @@ export default defineComponent({
     const vm = getCurrentInstance();
     if (typeof window !== 'undefined') {
       window.__FC_DESIGNER_EMIT__ = (name, payload) => {
+        // debug output for collaborative events
+        // eslint-disable-next-line no-console
+        console.log('[fc-designer emit]', name, payload);
         vm.emit(name, payload);
       };
     }
@@ -503,6 +506,8 @@ export default defineComponent({
     watch(editing, (val) => {
       Object.keys(collabState).forEach(k => delete collabState[k]);
       Object.assign(collabState, val || {});
+      // eslint-disable-next-line no-console
+      console.log('[fc-designer editing]', collabState);
     });
     provide('collabState', collabState);
 
