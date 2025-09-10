@@ -497,7 +497,7 @@ export default defineComponent({
         // eslint-disable-next-line no-console
         console.log('[fc-designer emit]', name, payload);
         if (name === 'update-field') {
-          const key = payload && (payload.id || payload.field);
+          const key = payload && ((payload.id || payload.field) + (payload.row ? ':' + payload.row : ''));
           clearTimeout(timers[key]);
           timers[key] = setTimeout(() => {
             vm.emit(name, payload);
@@ -1830,13 +1830,15 @@ export default defineComponent({
           const oldOn = rule.on || {};
           const fieldConst = JSON.stringify(rule.field);
           const idConst = JSON.stringify(rule._fc_id || (rule.__fc__ && rule.__fc__.id));
+          const rowConst = JSON.stringify(rule._fc_table_row);
           const wrap = (eventName, handler, withVal) => {
             const valuePart = withVal ? ', value: arguments[0]' : '';
+            const rowPart = rowConst && rowConst !== 'undefined' ? `, row: ${rowConst}` : '';
             const handlerStr = typeof handler === 'function'
               ? `(${handler.toString()}).apply(this, arguments);`
               : '';
             const body =
-              `window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('${eventName}', {id: ${idConst}, field: ${fieldConst}${valuePart}});` +
+              `window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('${eventName}', {id: ${idConst}, field: ${fieldConst}${rowPart}${valuePart}});` +
               (handlerStr ? `\n${handlerStr}` : '');
             return new Function(body);
           };
