@@ -1829,7 +1829,10 @@ export default defineComponent({
         if (config.input) {
           const oldOn = rule.on || {};
           const fieldConst = JSON.stringify(rule.field);
-          const idConst = JSON.stringify(rule._fc_id || (rule.__fc__ && rule.__fc__.id));
+          // prefer designer-assigned id, fall back to built-in id or field
+          const idConst = JSON.stringify(
+            rule._fc_id || rule.id || (rule.__fc__ && rule.__fc__.id) || rule.field
+          );
           const rowConst = JSON.stringify(rule._fc_table_row);
           const wrap = (eventName, handler, withVal) => {
             const valuePart = withVal ? ', value: arguments[0]' : '';
