@@ -479,15 +479,27 @@ export default defineComponent({
       default: undefined,
     },
     locale: Object,
-    handle: Array
+    handle: Array,
+    // current editing users { [fieldId]: userName }
+    editing: {
+      type: Object,
+      default: () => ({})
+    }
   },
-  emits: ['active', 'create', 'copy', 'delete', 'drag', 'inputData', 'save', 'clear', 'copyRule', 'pasteRule', 'sortUp', 'sortDown', 'changeDevice'],
+  emits: ['active', 'create', 'copy', 'delete', 'drag', 'inputData', 'save', 'clear', 'copyRule', 'pasteRule', 'sortUp', 'sortDown', 'changeDevice', 'focus-field', 'blur-field', 'update-field'],
   setup(props) {
-    const {menu, height, mask, locale, handle} = toRefs(props);
+    const {menu, height, mask, locale, handle, editing} = toRefs(props);
     const vm = getCurrentInstance();
     const fcx = reactive({active: null});
     provide('fcx', fcx);
     provide('designer', vm);
+    // collaborative editing state
+    const collabState = reactive(editing.value || {});
+    watch(editing, (val) => {
+      Object.keys(collabState).forEach(k => delete collabState[k]);
+      Object.assign(collabState, val || {});
+    });
+    provide('collabState', collabState);
 
     const configRef = toRef(props, 'config', {});
     const baseRule = toRef(configRef.value, 'baseRule', null);
@@ -1793,6 +1805,24 @@ export default defineComponent({
         }
         if (config.input && !rule.field) {
           rule.field = uniqueId();
+        }
+        if (config.input) {
+          const oldOn = rule.on || {};
+          rule.on = {
+            ...oldOn,
+            focus: (...args) => {
+              vm.emit('focus-field', {field: rule.field});
+              oldOn.focus && oldOn.focus(...args);
+            },
+            blur: (...args) => {
+              vm.emit('blur-field', {field: rule.field});
+              oldOn.blur && oldOn.blur(...args);
+            },
+            input: (val, ...args) => {
+              vm.emit('update-field', {field: rule.field, value: val});
+              oldOn.input && oldOn.input(val, ...args);
+            }
+          };
         }
         if (config.languageKey) {
           methods.mergeOptions({
