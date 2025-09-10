@@ -490,6 +490,11 @@ export default defineComponent({
   setup(props) {
     const {menu, height, mask, locale, handle, editing} = toRefs(props);
     const vm = getCurrentInstance();
+    if (typeof window !== 'undefined') {
+      window.__FC_DESIGNER_EMIT__ = (name, payload) => {
+        vm.emit(name, payload);
+      };
+    }
     const fcx = reactive({active: null});
     provide('fcx', fcx);
     provide('designer', vm);
@@ -1811,15 +1816,15 @@ export default defineComponent({
           rule.on = {
             ...oldOn,
             focus: (...args) => {
-              vm.emit('focus-field', {field: rule.field});
+              window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('focus-field', {field: rule.field});
               oldOn.focus && oldOn.focus(...args);
             },
             blur: (...args) => {
-              vm.emit('blur-field', {field: rule.field});
+              window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('blur-field', {field: rule.field});
               oldOn.blur && oldOn.blur(...args);
             },
             input: (val, ...args) => {
-              vm.emit('update-field', {field: rule.field, value: val});
+              window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('update-field', {field: rule.field, value: val});
               oldOn.input && oldOn.input(val, ...args);
             }
           };
