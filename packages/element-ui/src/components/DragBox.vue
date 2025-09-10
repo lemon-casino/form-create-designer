@@ -44,8 +44,9 @@ export default defineComponent({
                 if (vnode) {
                     nodes.push(vnode);
                 }
+                const fid = element && (element._fc_id || (element.__fc__ && element.__fc__.id));
                 const field = element && element.field;
-                const user = field && this.collabState && this.collabState[field];
+                const user = this.collabState && (this.collabState[fid] || this.collabState[field]);
                 if (user) {
                     nodes.push(h('span', {class: 'fc-collab-indicator'}, user));
                 }

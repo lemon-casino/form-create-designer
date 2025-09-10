@@ -480,7 +480,7 @@ export default defineComponent({
     },
     locale: Object,
     handle: Array,
-    // current editing users { [fieldId]: userName }
+    // current editing users { [id or field]: userName }
     editing: {
       type: Object,
       default: () => ({})
@@ -491,11 +491,21 @@ export default defineComponent({
     const {menu, height, mask, locale, handle, editing} = toRefs(props);
     const vm = getCurrentInstance();
     if (typeof window !== 'undefined') {
+      const timers = {};
       window.__FC_DESIGNER_EMIT__ = (name, payload) => {
         // debug output for collaborative events
         // eslint-disable-next-line no-console
         console.log('[fc-designer emit]', name, payload);
-        vm.emit(name, payload);
+        if (name === 'update-field') {
+          const key = payload && (payload.id || payload.field);
+          clearTimeout(timers[key]);
+          timers[key] = setTimeout(() => {
+            vm.emit(name, payload);
+            delete timers[key];
+          }, 300);
+        } else {
+          vm.emit(name, payload);
+        }
       };
     }
     const fcx = reactive({active: null});
@@ -1819,13 +1829,14 @@ export default defineComponent({
         if (config.input) {
           const oldOn = rule.on || {};
           const fieldConst = JSON.stringify(rule.field);
+          const idConst = JSON.stringify(rule._fc_id || (rule.__fc__ && rule.__fc__.id));
           const wrap = (eventName, handler, withVal) => {
             const valuePart = withVal ? ', value: arguments[0]' : '';
             const handlerStr = typeof handler === 'function'
               ? `(${handler.toString()}).apply(this, arguments);`
               : '';
             const body =
-              `window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('${eventName}', {field: ${fieldConst}${valuePart}});` +
+              `window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('${eventName}', {id: ${idConst}, field: ${fieldConst}${valuePart}});` +
               (handlerStr ? `\n${handlerStr}` : '');
             return new Function(body);
           };
