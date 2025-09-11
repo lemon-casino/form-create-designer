@@ -743,6 +743,10 @@ export default {
             const markRow = (rules) => {
                 (rules || []).forEach(r => {
                     r._fc_table_row = rowId;
+                    // use the table's field combined with row index as a stable
+                    // identifier so external systems can pinpoint which row was
+                    // edited even after schema serialization
+                    r._fc_id = rowId;
                     if (Array.isArray(r.children)) {
                         markRow(r.children);
                     }
