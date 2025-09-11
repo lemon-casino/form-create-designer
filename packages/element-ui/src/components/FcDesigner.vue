@@ -1732,7 +1732,7 @@ export default defineComponent({
       batchReplaceUni(json) {
         const regex = /"_fc_id"\s*:\s*"(\w[\w\d]+)"/g;
         json = json.replace(regex, () => {
-          return `"_fc_id":"id_${uniqueId()}"`;
+          return `"_fc_id":"${uniqueId()}"`;
         });
         return json;
       },
@@ -1842,8 +1842,8 @@ export default defineComponent({
               ? 'payload.value = arguments[0];'
               : '';
             const body =
-              `var payload = {id: ${idConst}, field: ${fieldConst}};\n` +
               `var row = this.rule && this.rule._fc_table_row;\n` +
+              `var payload = {id: row !== undefined ? row : ${idConst}, field: ${fieldConst}};\n` +
               `if (row !== undefined) payload.row = row;\n` +
               `${valueAssign}\n` +
               `window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('${eventName}', payload);` +
