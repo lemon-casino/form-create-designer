@@ -1846,11 +1846,8 @@ export default defineComponent({
                 ? `(${handler.toString()}).apply(this, arguments);`
                 : '';
             const valueAssign = withVal ? 'payload.value = arguments[0];\n' : '';
-            const rowConst =
-              rule._fc_table_row !== undefined
-                ? JSON.stringify(rule._fc_table_row)
-                : null;
-            const idExpr = rowConst !== null ? rowConst : idConst;
+            const idExpr =
+              `(this && this.rule && this.rule._fc_table_row !== undefined ? this.rule._fc_table_row : ${idConst})`;
             const body =
               `var payload = {id: ${idExpr}, field: ${fieldConst}};\n` +
               valueAssign +

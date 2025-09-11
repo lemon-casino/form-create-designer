@@ -743,32 +743,6 @@ export default {
             const markRow = (rules) => {
                 (rules || []).forEach(r => {
                     r._fc_table_row = rowId;
-                    if ((r._fc_on || r.on) && ((r._fc_on || r.on).focus || (r._fc_on || r.on).blur || (r._fc_on || r.on).input)) {
-                        const oldOn = r._fc_on || r.on;
-                        // preserve original handlers for future wraps
-                        r._fc_on = oldOn;
-                        const fieldConst = JSON.stringify(r.field);
-                        const idConst = JSON.stringify(rowId);
-                        const wrap = (eventName, handler, withVal) => {
-                            const handlerStr =
-                                typeof handler === 'function'
-                                    ? `(${handler.toString()}).apply(this, arguments);`
-                                    : '';
-                            const valueAssign = withVal ? 'payload.value = arguments[0];\n' : '';
-                            const body =
-                                `var payload = {id: ${idConst}, field: ${fieldConst}};\n` +
-                                valueAssign +
-                                `window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('${eventName}', payload);` +
-                                (handlerStr ? `\n${handlerStr}` : '');
-                            return new Function(body);
-                        };
-                        r.on = {
-                            ...oldOn,
-                            focus: wrap('focus-field', oldOn.focus),
-                            blur: wrap('blur-field', oldOn.blur),
-                            input: wrap('update-field', oldOn.input, true)
-                        };
-                    }
                     if (Array.isArray(r.children)) {
                         markRow(r.children);
                     }
