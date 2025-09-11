@@ -480,15 +480,26 @@ export default defineComponent({
       default: undefined,
     },
     locale: Object,
-    handle: Array
+    handle: Array,
+    editing: Object
   },
   emits: ['active', 'create', 'copy', 'delete', 'drag', 'inputData', 'save', 'clear', 'copyRule', 'pasteRule', 'sortUp', 'sortDown', 'changeDevice', 'focus-field', 'blur-field', 'update-field'],
   setup(props) {
-    const {menu, height, mask, locale, handle} = toRefs(props);
+    const {menu, height, mask, locale, handle, editing} = toRefs(props);
     const vm = getCurrentInstance();
     const fcx = reactive({active: null});
     provide('fcx', fcx);
     provide('designer', vm);
+
+    // collaborative editing state
+    const collabState = reactive(editing.value || {});
+    watch(editing, (val) => {
+      Object.keys(collabState).forEach(k => delete collabState[k]);
+      Object.assign(collabState, val || {});
+      // eslint-disable-next-line no-console
+      console.log('[fc-designer editing]', collabState);
+    });
+    provide('collabState', collabState);
 
     const configRef = toRef(props, 'config', {});
     const baseRule = toRef(configRef.value, 'baseRule', null);
