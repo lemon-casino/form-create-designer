@@ -491,6 +491,10 @@ export default defineComponent({
     provide('fcx', fcx);
     provide('designer', vm);
 
+    const globalBus = typeof window !== 'undefined'
+      ? (window.__FC_DESIGNER_EMIT__ = window.__FC_DESIGNER_EMIT__ || Mitt())
+      : Mitt();
+
     // collaborative editing state
     const collabState = reactive(editing.value || {});
     watch(editing, (val) => {
@@ -839,6 +843,7 @@ export default defineComponent({
         if (evt) {
           vm.emit(evt, payload);
           console.log('[fc-designer emit]', evt, payload);
+          globalBus.emit(evt, payload);
         }
       },
       makeChildren(children) {
