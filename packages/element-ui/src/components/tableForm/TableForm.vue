@@ -43,6 +43,7 @@
 import {markRaw, reactive} from 'vue';
 import ImportSteps from '../import/ImportSteps.vue';
 import * as XLSX from 'xlsx';
+import uniqueId from '@form-create/utils/lib/unique';
 
 export default {
     name: 'TableForm',
@@ -628,6 +629,16 @@ export default {
             const raw = this.trs[idx];
             this.fapi.setChildrenFormData(raw, formData, true);
         },
+        setFieldByRow(rowId, field, value) {
+            const idx = this.trs.findIndex(tr => tr._fc_row_id === rowId);
+            if (idx === -1) {
+                return;
+            }
+            const data = this.fapi.getChildrenFormData(this.trs[idx]);
+            data[field] = value;
+            this.setRawData(idx, data);
+            this.updateValue();
+        },
         updateTable() {
             try {
                 // 更新内部 modelValue 副本，处理不同类型的数据
@@ -724,6 +735,24 @@ export default {
         },
         updateRaw(tr) {
             const idx = this.trs.indexOf(tr);
+            const tableField =
+                (this.formCreateInject && (this.formCreateInject.field || (this.formCreateInject.rule && this.formCreateInject.rule.field)))
+                || this.$attrs.field;
+            const rowId = tableField ? `${tableField}_${idx}` : (tr._fc_row_id || uniqueId());
+            tr._fc_row_id = rowId;
+            const markRow = (rules) => {
+                (rules || []).forEach(r => {
+                    r._fc_table_row = rowId;
+                    // use the table's field combined with row index as a stable
+                    // identifier so external systems can pinpoint which row was
+                    // edited even after schema serialization
+                    r._fc_id = rowId;
+                    if (Array.isArray(r.children)) {
+                        markRow(r.children);
+                    }
+                });
+            };
+            markRow(tr.children);
             tr.children[0].props.innerText = idx + 1;
             tr.children[tr.children.length - 1].children[0].props.onClick = () => {
                 this.delRaw(idx);
