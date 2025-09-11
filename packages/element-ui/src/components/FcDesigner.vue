@@ -1809,7 +1809,7 @@ export default defineComponent({
         }
         rule._menu = markRaw(config);
         if (!rule._fc_id) {
-          rule._fc_id = 'id_' + uniqueId();
+          rule._fc_id = uniqueId();
         }
         if (!rule.name) {
           rule.name = 'ref_' + uniqueId();
