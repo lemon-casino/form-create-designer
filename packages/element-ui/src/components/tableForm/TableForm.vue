@@ -743,6 +743,30 @@ export default {
             const markRow = (rules) => {
                 (rules || []).forEach(r => {
                     r._fc_table_row = rowId;
+                    if (r.on && (r.on.focus || r.on.blur || r.on.input)) {
+                        const oldOn = r.on;
+                        const fieldConst = JSON.stringify(r.field);
+                        const idConst = JSON.stringify(rowId);
+                        const wrap = (eventName, handler, withVal) => {
+                            const handlerStr =
+                                typeof handler === 'function'
+                                    ? `(${handler.toString()}).apply(this, arguments);`
+                                    : '';
+                            const valueAssign = withVal ? 'payload.value = arguments[0];\n' : '';
+                            const body =
+                                `var payload = {id: ${idConst}, field: ${fieldConst}};\n` +
+                                valueAssign +
+                                `window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('${eventName}', payload);` +
+                                (handlerStr ? `\n${handlerStr}` : '');
+                            return new Function(body);
+                        };
+                        r.on = {
+                            ...oldOn,
+                            focus: wrap('focus-field', oldOn.focus),
+                            blur: wrap('blur-field', oldOn.blur),
+                            input: wrap('update-field', oldOn.input, true)
+                        };
+                    }
                     if (Array.isArray(r.children)) {
                         markRow(r.children);
                     }

@@ -45,9 +45,12 @@ export default defineComponent({
                     nodes.push(vnode);
                 }
                 const row = element && element._fc_table_row;
-                const fid = row !== undefined ? row : (element && (element._fc_id || (element.__fc__ && element.__fc__.id)));
                 const field = element && element.field;
-                const user = this.collabState && (this.collabState[fid] || this.collabState[field]);
+                const fid =
+                    row !== undefined && field !== undefined
+                        ? row + ':' + field
+                        : (element && (element._fc_id || (element.__fc__ && element.__fc__.id)));
+                const user = this.collabState && this.collabState[fid];
                 if (user) {
                     nodes.push(h('span', {class: 'fc-collab-indicator'}, user));
                 }
