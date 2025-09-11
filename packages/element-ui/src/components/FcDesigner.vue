@@ -482,7 +482,7 @@ export default defineComponent({
     locale: Object,
     handle: Array
   },
-  emits: ['active', 'create', 'copy', 'delete', 'drag', 'inputData', 'save', 'clear', 'copyRule', 'pasteRule', 'sortUp', 'sortDown', 'changeDevice'],
+  emits: ['active', 'create', 'copy', 'delete', 'drag', 'inputData', 'save', 'clear', 'copyRule', 'pasteRule', 'sortUp', 'sortDown', 'changeDevice', 'focus-field', 'blur-field', 'update-field'],
   setup(props) {
     const {menu, height, mask, locale, handle} = toRefs(props);
     const vm = getCurrentInstance();
