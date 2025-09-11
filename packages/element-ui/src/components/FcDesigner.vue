@@ -210,7 +210,8 @@
                  :style="{'--fc-drag-empty': `'${t('designer.dragEmpty')}'`,'--fc-child-empty': `'${t('designer.childEmpty')}'`}">
               <div class="_fc-m-input" v-if="inputForm.state">
                 <ViewForm :key="inputForm.key" :rule="inputForm.rule" :option="inputForm.option"
-                          v-model:api="inputForm.api" :disabled="false"></ViewForm>
+                          v-model:api="inputForm.api" :disabled="false"
+                          @emit-event="emitFieldEvent"></ViewForm>
               </div>
               <DragForm v-else :rule="dragForm.rule" :option="formOptions"
                         v-model:api="dragForm.api"></DragForm>
@@ -807,6 +808,28 @@ export default defineComponent({
           n && methods.updateRuleFormData()
         }, {deep: true, flush: 'post'});
       },
+      // emit field events for collaboration
+      emitFieldEvent(name, field, ...args) {
+        const value = args[0];
+        const payload = {field, value};
+        const match = field && String(field).match(/^([A-Za-z0-9_]+_\d+)_([A-Za-z0-9_]+)$/);
+        if (match) {
+          payload.id = match[1];
+          payload.field = match[2];
+        }
+        let evt = '';
+        if (name === 'focus') {
+          evt = 'focus-field';
+        } else if (name === 'blur') {
+          evt = 'blur-field';
+        } else if (name === 'input' || name === 'change') {
+          evt = 'update-field';
+        }
+        if (evt) {
+          vm.emit(evt, payload);
+          console.log('[fc-designer emit]', evt, payload);
+        }
+      },
       makeChildren(children) {
         return reactive({children}).children;
       },
@@ -880,6 +903,8 @@ export default defineComponent({
           data.inputForm.option.appendValue = false;
           data.inputForm.option.submitBtn.show = false;
           data.inputForm.option.resetBtn.show = false;
+          // enable emit-event for focus, blur and input events
+          data.inputForm.option.emit = ['focus', 'blur', 'input', 'change'];
           methods.clearActiveRule();
         }
       },

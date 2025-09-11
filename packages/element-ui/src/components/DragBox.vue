@@ -38,7 +38,17 @@ export default defineComponent({
                         vnode = keys[key + 'fc'];
                     }
                     if (vnode) {
-                        return h('div', {class: '_fc-' + ctx.$props.tag + '-item _fd-drag-item', key}, vnode);
+                        const children = [vnode];
+                        if (element && Array.isArray(element.unames) && element.unames.length) {
+                            children.push(
+                                h('div', {class: '_fc-editing-users'}, element.unames.map(n => h('span', {class: '_fc-user'}, n)))
+                            );
+                        }
+                        return h('div', {
+                            class: '_fc-' + ctx.$props.tag + '-item _fd-drag-item',
+                            key,
+                            style: element && element.unames && element.unames.length ? {position: 'relative'} : undefined
+                        }, children);
                     }
                 }
                 return h('div', {class: '_fc-' + ctx.$props.tag + '-item _fd-drag-item', key: index}, null);
