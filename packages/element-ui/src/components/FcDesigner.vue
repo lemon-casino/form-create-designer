@@ -380,7 +380,7 @@
           </div>
           <template v-if="previewStatus === 'form'">
             <ViewForm :rule="preview.rule" :option="preview.option" v-model:api="preview.api"
-                      v-if="preview.state">
+                      v-if="preview.state" @emit-event="emitFieldEvent">
               <template v-for="(_, name) in $slots" #[name]="scope">
                 <slot :name="name" v-bind="scope ?? {}"/>
               </template>
@@ -1018,6 +1018,8 @@ export default defineComponent({
         const options = methods.getOptionsJson();
         data.preview.rule = designerForm.parseJson(rule);
         data.preview.option = designerForm.parseJson(options);
+        // enable emit-event for focus, blur and input events in preview
+        data.preview.option.emit = ['focus', 'blur', 'input', 'change'];
         const useV2 = methods.getConfig('useTemplate', false);
         data.preview.component = hljs.highlight(
             useV2 ? formTemplate(rule, options) : formTemplateV3(rule, options),
