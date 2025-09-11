@@ -723,9 +723,6 @@ export default {
                 return;
             }
             const tr = this.formCreateInject.form.parseJson(this.copyTrs)[0];
-            if (!tr._fc_row_id) {
-                tr._fc_row_id = uniqueId();
-            }
             if (this.trs.length === 1 && this.trs[0]._isEmpty) {
                 this.trs.splice(0, 1);
             }
@@ -738,7 +735,10 @@ export default {
         },
         updateRaw(tr) {
             const idx = this.trs.indexOf(tr);
-            const rowId = tr._fc_row_id || uniqueId();
+            const tableField =
+                (this.formCreateInject && (this.formCreateInject.field || (this.formCreateInject.rule && this.formCreateInject.rule.field)))
+                || this.$attrs.field;
+            const rowId = tableField ? `${tableField}_${idx}` : (tr._fc_row_id || uniqueId());
             tr._fc_row_id = rowId;
             const markRow = (rules) => {
                 (rules || []).forEach(r => {
