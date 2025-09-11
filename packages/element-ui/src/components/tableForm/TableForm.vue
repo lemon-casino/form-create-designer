@@ -743,8 +743,10 @@ export default {
             const markRow = (rules) => {
                 (rules || []).forEach(r => {
                     r._fc_table_row = rowId;
-                    if (r.on && (r.on.focus || r.on.blur || r.on.input)) {
-                        const oldOn = r.on;
+                    if ((r._fc_on || r.on) && ((r._fc_on || r.on).focus || (r._fc_on || r.on).blur || (r._fc_on || r.on).input)) {
+                        const oldOn = r._fc_on || r.on;
+                        // preserve original handlers for future wraps
+                        r._fc_on = oldOn;
                         const fieldConst = JSON.stringify(r.field);
                         const idConst = JSON.stringify(rowId);
                         const wrap = (eventName, handler, withVal) => {

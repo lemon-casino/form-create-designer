@@ -1832,6 +1832,9 @@ export default defineComponent({
         }
         if (config.input) {
           const oldOn = rule.on || {};
+          // stash original handlers so child components (e.g. TableForm)
+          // can wrap without re-emitting designer hooks
+          rule._fc_on = oldOn;
           const fieldConst = JSON.stringify(rule.field);
           // prefer designer-assigned id, fall back to built-in id or field
           const idConst = JSON.stringify(
