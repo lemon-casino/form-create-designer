@@ -479,15 +479,51 @@ export default defineComponent({
       default: undefined,
     },
     locale: Object,
-    handle: Array
+    handle: Array,
+    // current editing users { [id or field]: userName }
+    editing: {
+      type: Object,
+      default: () => ({})
+    }
   },
-  emits: ['active', 'create', 'copy', 'delete', 'drag', 'inputData', 'save', 'clear', 'copyRule', 'pasteRule', 'sortUp', 'sortDown', 'changeDevice'],
+  emits: ['active', 'create', 'copy', 'delete', 'drag', 'inputData', 'save', 'clear', 'copyRule', 'pasteRule', 'sortUp', 'sortDown', 'changeDevice', 'focus-field', 'blur-field', 'update-field'],
   setup(props) {
-    const {menu, height, mask, locale, handle} = toRefs(props);
+    const {menu, height, mask, locale, handle, editing} = toRefs(props);
     const vm = getCurrentInstance();
+    if (typeof window !== 'undefined') {
+      const timers = {};
+      window.__FC_DESIGNER_EMIT__ = (name, payload) => {
+        // debug output for collaborative events
+        // eslint-disable-next-line no-console
+        console.log('[fc-designer emit]', name, payload);
+        if (name === 'update-field') {
+          const key =
+            payload &&
+            ((payload.id && payload.field)
+              ? payload.id + ':' + payload.field
+              : payload.id || payload.field);
+          clearTimeout(timers[key]);
+          timers[key] = setTimeout(() => {
+            vm.emit(name, payload);
+            delete timers[key];
+          }, 300);
+        } else {
+          vm.emit(name, payload);
+        }
+      };
+    }
     const fcx = reactive({active: null});
     provide('fcx', fcx);
     provide('designer', vm);
+    // collaborative editing state
+    const collabState = reactive(editing.value || {});
+    watch(editing, (val) => {
+      Object.keys(collabState).forEach(k => delete collabState[k]);
+      Object.assign(collabState, val || {});
+      // eslint-disable-next-line no-console
+      console.log('[fc-designer editing]', collabState);
+    });
+    provide('collabState', collabState);
 
     const configRef = toRef(props, 'config', {});
     const baseRule = toRef(configRef.value, 'baseRule', null);
@@ -1700,7 +1736,7 @@ export default defineComponent({
       batchReplaceUni(json) {
         const regex = /"_fc_id"\s*:\s*"(\w[\w\d]+)"/g;
         json = json.replace(regex, () => {
-          return `"_fc_id":"id_${uniqueId()}"`;
+          return `"_fc_id":"${uniqueId()}"`;
         });
         return json;
       },
@@ -1777,7 +1813,7 @@ export default defineComponent({
         }
         rule._menu = markRaw(config);
         if (!rule._fc_id) {
-          rule._fc_id = 'id_' + uniqueId();
+          rule._fc_id = uniqueId();
         }
         if (!rule.name) {
           rule.name = 'ref_' + uniqueId();
@@ -1793,6 +1829,38 @@ export default defineComponent({
         }
         if (config.input && !rule.field) {
           rule.field = uniqueId();
+        }
+        if (config.input) {
+          const oldOn = rule.on || {};
+          // stash original handlers so child components (e.g. TableForm)
+          // can wrap without re-emitting designer hooks
+          rule._fc_on = oldOn;
+          const fieldConst = JSON.stringify(rule.field);
+          // prefer designer-assigned id, fall back to built-in id or field
+          const idConst = JSON.stringify(
+            rule._fc_id || rule.id || (rule.__fc__ && rule.__fc__.id) || rule.field
+          );
+          const wrap = (eventName, handler, withVal) => {
+            const handlerStr =
+              typeof handler === 'function'
+                ? `(${handler.toString()}).apply(this, arguments);`
+                : '';
+            const valueAssign = withVal ? 'payload.value = arguments[0];\n' : '';
+            const idExpr =
+              `(this && this.rule && this.rule._fc_table_row !== undefined ? this.rule._fc_table_row : ${idConst})`;
+            const body =
+              `var payload = {id: ${idExpr}, field: ${fieldConst}};\n` +
+              valueAssign +
+              `window.__FC_DESIGNER_EMIT__ && window.__FC_DESIGNER_EMIT__('${eventName}', payload);` +
+              (handlerStr ? `\n${handlerStr}` : '');
+            return new Function(body);
+          };
+          rule.on = {
+            ...oldOn,
+            focus: wrap('focus-field', oldOn.focus),
+            blur: wrap('blur-field', oldOn.blur),
+            input: wrap('update-field', oldOn.input, true)
+          };
         }
         if (config.languageKey) {
           methods.mergeOptions({
